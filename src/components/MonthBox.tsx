@@ -41,15 +41,14 @@ export default function MonthBox({
   const leaveSet = new Set(leaveDays);
   const blockSet = new Set(vacationBlockDays);
 
-  // Build holiday lookup: date → name for tooltips
   const holidayMap = new Map<string, Holiday>(
     holidayData.map((h) => [h.date, h])
   );
 
   return (
-    <div className="bg-white border border-blue-100 rounded-xl p-3 shadow-sm
+    <div className="bg-white dark:bg-gray-800 border border-blue-100 dark:border-gray-700 rounded-xl p-3 shadow-sm
                     hover:shadow-md transition-shadow duration-200 overflow-visible">
-      <h2 className="text-sm font-bold text-gray-800 text-center mb-2 tracking-wide">
+      <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200 text-center mb-2 tracking-wide">
         {monthName}
       </h2>
 
@@ -59,7 +58,7 @@ export default function MonthBox({
           <div
             key={idx}
             className={`text-center text-[10px] font-semibold py-0.5 ${
-              idx >= 5 ? "text-blue-400" : "text-gray-400"
+              idx >= 5 ? "text-blue-400 dark:text-blue-500" : "text-gray-400 dark:text-gray-500"
             }`}
           >
             {label}
@@ -68,7 +67,7 @@ export default function MonthBox({
       </div>
 
       {/* Day cells */}
-      <div className="grid grid-cols-7 gap-0.5 overflow-visible">
+      <div className="grid grid-cols-7 gap-px sm:gap-0.5 overflow-visible">
         {emptyCells.map((_, i) => (
           <div key={`empty-${i}`} />
         ))}
@@ -87,7 +86,6 @@ export default function MonthBox({
           const isVacationBlock = blockSet.has(fullDate);
           const isPast = fullDate < today;
 
-          // Build tooltip text
           let tooltip: string | undefined;
           if (holiday) {
             tooltip = holiday.name;

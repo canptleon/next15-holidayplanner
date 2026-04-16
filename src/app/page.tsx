@@ -22,12 +22,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-full flex items-center justify-center py-16 px-4 bg-gradient-to-b from-blue-50/60 to-white">
+    <div className="min-h-full flex items-center justify-center py-16 px-4 bg-gradient-to-b from-blue-50/60 to-white dark:from-gray-900 dark:to-gray-900">
       <div className="w-full max-w-sm">
         {/* Icon + heading */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl
-                          bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-200 mb-6">
+                          bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/40 mb-6">
             <svg
               className="w-8 h-8 text-white"
               fill="none"
@@ -39,21 +39,21 @@ export default function HomePage() {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
             {t.siteTitle}
           </h1>
-          <p className="text-gray-500 mt-3 text-base leading-relaxed max-w-xs mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 mt-3 text-base leading-relaxed max-w-xs mx-auto">
             {t.homeTagline}
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-blue-100/60 border border-blue-100 p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-blue-100/60 dark:shadow-none border border-blue-100 dark:border-gray-700 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
                 htmlFor="days-input"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
               >
                 {t.homeInputLabel}
               </label>
@@ -69,12 +69,12 @@ export default function HomePage() {
                 }}
                 placeholder={t.homeInputPlaceholder}
                 className={`
-                  w-full border-2 rounded-xl px-4 py-3 text-gray-900 text-lg font-medium
-                  placeholder:text-gray-300 placeholder:font-normal
+                  w-full border-2 rounded-xl px-4 py-3 text-gray-900 dark:text-white text-lg font-medium
+                  placeholder:text-gray-300 dark:placeholder:text-gray-600 placeholder:font-normal
                   focus:outline-none focus:ring-0 transition-colors duration-150
                   ${error
-                    ? "border-red-300 bg-red-50 focus:border-red-400"
-                    : "border-blue-200 bg-blue-50/40 focus:border-blue-400 focus:bg-white"
+                    ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 focus:border-red-400 dark:focus:border-red-600"
+                    : "border-blue-200 dark:border-gray-600 bg-blue-50/40 dark:bg-gray-700 focus:border-blue-400 dark:focus:border-blue-500 focus:bg-white dark:focus:bg-gray-700"
                   }
                 `}
               />
@@ -93,15 +93,15 @@ export default function HomePage() {
               className="w-full bg-gradient-to-r from-blue-500 to-blue-600
                          hover:from-blue-600 hover:to-blue-700
                          active:scale-[0.98] text-white font-bold rounded-xl
-                         py-3.5 text-base shadow-md shadow-blue-200
+                         py-3.5 text-base shadow-md shadow-blue-200 dark:shadow-blue-900/40
                          transition-all duration-150
-                         focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                         focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
               {t.homeSubmitBtn}
             </button>
           </form>
 
-          <p className="mt-5 text-xs text-center text-gray-400">
+          <p className="mt-5 text-xs text-center text-gray-400 dark:text-gray-500">
             {t.homeDisclaimer}
           </p>
         </div>
@@ -114,10 +114,10 @@ export default function HomePage() {
             { num: "10x", label: "Max Verimlilik / Max Efficiency" },
           ].map(({ num, label }) => (
             <div key={num}
-              className="flex items-center gap-2 bg-white rounded-full px-4 py-2
-                         border border-blue-100 shadow-sm text-sm">
-              <span className="font-bold text-blue-600">{num}</span>
-              <span className="text-gray-500">{label}</span>
+              className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-full px-4 py-2
+                         border border-blue-100 dark:border-gray-700 shadow-sm text-sm">
+              <span className="font-bold text-blue-600 dark:text-blue-400">{num}</span>
+              <span className="text-gray-500 dark:text-gray-400">{label}</span>
             </div>
           ))}
         </div>

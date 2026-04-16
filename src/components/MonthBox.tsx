@@ -1,63 +1,111 @@
 import Days from "./Days";
-import holidayData from "@/data/static/national-holidays.json";
 import dayjs from "dayjs";
 import "dayjs/locale/tr";
+
 dayjs.locale("tr");
 
+interface Holiday {
+  date: string;
+  name: string;
+  type: string;
+}
+
 interface MonthBoxProps {
+  year: number;
+  today: string;
   monthName: string;
   monthIndex: number;
   days: number;
   startDay: number;
-  highlightedDays: string[];
+  leaveDays: string[];
+  vacationBlockDays: string[];
+  holidayData: Holiday[];
+  weekdayLabels: string[];
 }
 
 export default function MonthBox({
+  year,
+  today,
   monthName,
   monthIndex,
   days,
   startDay,
-  highlightedDays,
+  leaveDays,
+  vacationBlockDays,
+  holidayData,
+  weekdayLabels,
 }: MonthBoxProps) {
   const daysArray = Array.from({ length: days }, (_, i) => i + 1);
-  const weekdays = ["P", "S", "Ç", "P", "C", "C", "P"];
-  const emptyCells = Array.from({ length: startDay }, () => null);
+  const emptyCells = Array.from({ length: startDay });
+
+  const leaveSet = new Set(leaveDays);
+  const blockSet = new Set(vacationBlockDays);
+
+  // Build holiday lookup: date → name for tooltips
+  const holidayMap = new Map<string, Holiday>(
+    holidayData.map((h) => [h.date, h])
+  );
 
   return (
-    <div className="border rounded-lg p-4 text-black bg-blue-100 shadow w-full md:w-48 lg:w-80">
-      <h2 className="text-lg font-bold mb-2 text-center">{monthName}</h2>
-      <div className="grid grid-cols-7 gap-2 text-center font-bold text-gray-700 mb-2">
-        {weekdays.map((weekday, index) => (
-          <div key={`${monthIndex}-${weekday}-${index}`}>{weekday}</div>
+    <div className="bg-white border border-blue-100 rounded-xl p-3 shadow-sm
+                    hover:shadow-md transition-shadow duration-200 overflow-visible">
+      <h2 className="text-sm font-bold text-gray-800 text-center mb-2 tracking-wide">
+        {monthName}
+      </h2>
+
+      {/* Weekday header */}
+      <div className="grid grid-cols-7 mb-1">
+        {weekdayLabels.map((label, idx) => (
+          <div
+            key={idx}
+            className={`text-center text-[10px] font-semibold py-0.5 ${
+              idx >= 5 ? "text-blue-400" : "text-gray-400"
+            }`}
+          >
+            {label}
+          </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-2">
-        {/* Empty cells for padding */}
-        {emptyCells.map((_, index) => (
-          <div key={`empty-${index}`}></div>
+
+      {/* Day cells */}
+      <div className="grid grid-cols-7 gap-0.5 overflow-visible">
+        {emptyCells.map((_, i) => (
+          <div key={`empty-${i}`} />
         ))}
 
-        {/* Calendar days */}
         {daysArray.map((day) => {
           const fullDate = dayjs(
-            `2025-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+            `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
           ).format("YYYY-MM-DD");
 
-          const holiday = holidayData.find((holiday) => holiday.date === fullDate);
+          const holiday = holidayMap.get(fullDate);
           const isHoliday = holiday?.type === "full";
           const isHalfDay = holiday?.type === "half";
           const dayOfWeek = dayjs(fullDate).day();
-          const isWeekend = dayOfWeek === 6 || dayOfWeek === 0;
-          const isHighlighted = highlightedDays.includes(fullDate);
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          const isLeaveDay = leaveSet.has(fullDate);
+          const isVacationBlock = blockSet.has(fullDate);
+          const isPast = fullDate < today;
+
+          // Build tooltip text
+          let tooltip: string | undefined;
+          if (holiday) {
+            tooltip = holiday.name;
+          } else if (isLeaveDay) {
+            tooltip = "İzin Günü";
+          }
 
           return (
             <Days
               key={day}
               day={day}
-              isHoliday={isHoliday}
-              isHalfDay={isHalfDay}
+              isHoliday={isHoliday ?? false}
+              isHalfDay={isHalfDay ?? false}
               isWeekend={isWeekend}
-              isHighlighted={isHighlighted}
+              isLeaveDay={isLeaveDay}
+              isVacationBlock={isVacationBlock}
+              isPast={isPast}
+              tooltip={tooltip}
             />
           );
         })}

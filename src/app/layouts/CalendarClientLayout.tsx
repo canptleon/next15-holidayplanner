@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Analytics from "@/components/Analytics";
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import MonthBox from "@/components/MonthBox";
+import { useI18n } from "@/components/I18nProvider";
 import dayjs from "dayjs";
 import dayOfYear from "dayjs/plugin/dayOfYear";
 import "dayjs/locale/tr";
@@ -15,10 +16,14 @@ interface VacationBlock {
   endDate: string;
   leaveDaysUsed: string[];
   totalVacationDays: number;
+  efficiency: number;
 }
 
 interface VacationPlan {
   blocks: VacationBlock[];
+  totalVacationDays: number;
+  totalLeaveDaysUsed: number;
+  efficiency: number;
 }
 
 interface Holiday {
@@ -29,107 +34,327 @@ interface Holiday {
 
 interface CalendarClientLayoutProps {
   year: number;
+  leaveDaysInput: number;
+  today: string;
   vacationPlans: VacationPlan[];
   holidayData: Holiday[];
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatDateRange(start: string, end: string): string {
+  const s = dayjs(start);
+  const e = dayjs(end);
+  if (s.month() === e.month()) return `${s.format("D")}–${e.format("D MMM")}`;
+  return `${s.format("D MMM")} – ${e.format("D MMM")}`;
+}
+
+// ─── Plan Card ────────────────────────────────────────────────────────────────
+
+interface PlanCardProps {
+  plan: VacationPlan;
+  index: number;
+  isSelected: boolean;
+  onClick: () => void;
+  leaveDaysInput: number;
+}
+
+function PlanCard({ plan, index, isSelected, onClick, leaveDaysInput }: PlanCardProps) {
+  const { t } = useI18n();
+  const unusedLeave = leaveDaysInput - plan.totalLeaveDaysUsed;
+
+  const effColor =
+    plan.efficiency >= 3.5
+      ? "bg-emerald-100 text-emerald-700"
+      : plan.efficiency >= 2.5
+      ? "bg-blue-100 text-blue-700"
+      : "bg-gray-100 text-gray-500";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        w-full text-left rounded-xl border-2 p-4
+        transition-all duration-200
+        hover:-translate-y-0.5 hover:shadow-md
+        ${isSelected
+          ? "border-blue-500 bg-blue-50 shadow-md"
+          : "border-gray-200 bg-white hover:border-blue-200"
+        }
+      `}
+    >
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-xs font-bold uppercase tracking-widest ${isSelected ? "text-blue-600" : "text-gray-400"}`}>
+            {t.planLabel} {index + 1}
+          </span>
+          {index === 0 && (
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
+              {t.best}
+            </span>
+          )}
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-3xl font-extrabold text-gray-900 leading-none">
+            {plan.totalVacationDays}
+          </div>
+          <div className="text-xs text-gray-400 mt-0.5">{t.daysOff}</div>
+        </div>
+      </div>
+
+      {/* Block date ranges */}
+      <div className="space-y-1 mb-3">
+        {plan.blocks.map((block, bi) => (
+          <div key={bi} className="flex items-center justify-between text-xs">
+            <span className="text-gray-700 font-medium">
+              {plan.blocks.length > 1 && (
+                <span className="text-gray-400 mr-1">{bi + 1}.</span>
+              )}
+              {formatDateRange(block.startDate, block.endDate)}
+            </span>
+            <span className="text-gray-400 ml-2 shrink-0">{block.totalVacationDays}g</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Stats footer */}
+      <div className="pt-2.5 border-t border-gray-100 flex items-center justify-between gap-2">
+        <span className="text-sm text-gray-600">
+          <span className="font-bold text-emerald-600">{plan.totalLeaveDaysUsed}</span>
+          {" "}{t.leaveArrow}{" "}
+          <span className="text-gray-400 mx-0.5">→</span>{" "}
+          <span className="font-bold text-gray-900">{plan.totalVacationDays}</span>
+          {" "}{t.daysWord}
+        </span>
+        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${effColor}`}>
+          {plan.efficiency.toFixed(1)}x
+        </span>
+      </div>
+
+      {unusedLeave > 0 && (
+        <p className="mt-1.5 text-xs text-amber-500">{t.unusedLeave(unusedLeave)}</p>
+      )}
+    </button>
+  );
+}
+
+// ─── Main Layout ──────────────────────────────────────────────────────────────
+
 export default function CalendarClientLayout({
   year,
+  leaveDaysInput,
+  today,
   vacationPlans,
   holidayData,
 }: CalendarClientLayoutProps) {
+  const { t, lang } = useI18n();
+  const router = useRouter();
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
-  const [highlightedDays, setHighlightedDays] = useState<string[]>([]);
-  const [months, setMonths] = useState<
-    { name: string; monthIndex: number; days: number; startDay: number }[]
-  >([]);
-  const [analyticsData, setAnalyticsData] = useState({
-    totalDays: 0,
-    totalHolidays: 0,
-    totalHalfDays: 0,
-    totalWeekends: 0,
-  });
 
-  useEffect(() => {
-    const calculatedMonths = Array.from({ length: 12 }, (_, i) => {
-      const month = dayjs().year(year).month(i);
-      const startDay = month.startOf("month").day();
-      const adjustedStartDay = startDay === 0 ? 6 : startDay - 1;
-      return {
-        name: month.format("MMMM"),
-        monthIndex: i,
-        days: month.daysInMonth(),
-        startDay: adjustedStartDay,
-      };
-    });
+  const months = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => {
+        const month = dayjs().year(year).month(i);
+        const startDay = month.startOf("month").day();
+        return {
+          name: month.locale(lang).format("MMMM"),
+          monthIndex: i,
+          days: month.daysInMonth(),
+          startDay: startDay === 0 ? 6 : startDay - 1,
+        };
+      }),
+    [year, lang]
+  );
 
-    const totalDays = dayjs(`${year}-12-31`).dayOfYear();
-    const totalHolidays = holidayData.filter(
-      (holiday) => holiday.type === "full"
-    ).length;
-    const totalHalfDays = holidayData.filter(
-      (holiday) => holiday.type === "half"
-    ).length;
-    const totalWeekends = calculatedMonths.reduce((count, month) => {
-      return (
+  const selectedPlan = vacationPlans[selectedPlanIndex] ?? null;
+
+  const { leaveDaysList, vacationBlockDaysList } = useMemo(() => {
+    if (!selectedPlan) return { leaveDaysList: [], vacationBlockDaysList: [] };
+    const leaveSet: string[] = [];
+    const blockSet: string[] = [];
+    for (const block of selectedPlan.blocks) {
+      block.leaveDaysUsed.forEach((d) => leaveSet.push(d));
+      const start = dayjs(block.startDate);
+      const span = dayjs(block.endDate).diff(start, "day") + 1;
+      for (let i = 0; i < span; i++) {
+        blockSet.push(start.add(i, "day").format("YYYY-MM-DD"));
+      }
+    }
+    return { leaveDaysList: leaveSet, vacationBlockDaysList: blockSet };
+  }, [selectedPlan]);
+
+  const yearStats = useMemo(() => {
+    const totalHolidays = holidayData.filter((h) => h.type === "full").length;
+    const totalHalfDays = holidayData.filter((h) => h.type === "half").length;
+    const totalWeekends = months.reduce(
+      (count, m) =>
         count +
-        Array.from({ length: month.days }, (_, i) =>
-          dayjs(`${year}-${month.monthIndex + 1}-${i + 1}`).day()
-        ).filter((day) => day === 6 || day === 0).length
-      );
-    }, 0);
+        Array.from({ length: m.days }, (_, i) =>
+          dayjs(`${year}-${m.monthIndex + 1}-${i + 1}`).day()
+        ).filter((d) => d === 0 || d === 6).length,
+      0
+    );
+    return { totalHolidays, totalHalfDays, totalWeekends };
+  }, [year, holidayData, months]);
 
-    setMonths(calculatedMonths);
-    setAnalyticsData({
-      totalDays,
-      totalHolidays,
-      totalHalfDays,
-      totalWeekends,
-    });
-  }, [year, holidayData]);
-
-  useEffect(() => {
-    const plan = vacationPlans[selectedPlanIndex];
-    const newHighlightedDays = plan?.blocks.flatMap((block) => block.leaveDaysUsed) || [];
-    setHighlightedDays(newHighlightedDays);
-  }, [selectedPlanIndex, vacationPlans]);
+  // ── Legend items (rendered at top of calendar area) ───────────────────────
+  const legendItems = [
+    { bg: "bg-emerald-200 border-emerald-400", label: t.legendLeaveDay },
+    { bg: "bg-emerald-50 border-emerald-200", label: t.legendVacationBlock },
+    { bg: "bg-red-100 border-red-300", label: t.legendPublicHoliday },
+    { bg: "bg-orange-100 border-orange-300", label: t.legendHalfDay },
+    { bg: "bg-blue-50 border-blue-200", label: t.legendWeekend },
+    { bg: "bg-gray-100 border-gray-200 opacity-60", label: t.legendPast },
+  ];
 
   return (
-    <div className="text-center p-4">
-      <h1 className="text-2xl font-bold mb-6">
-        Holiday Opportunities for {vacationPlans.length} Plans
-      </h1>
-      <div className="mb-6">
-        <Analytics {...analyticsData} />
+    <div className="min-h-screen bg-gradient-to-b from-blue-50/40 to-gray-50">
+      {/* ── Top bar ── */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-blue-100 px-5 py-4">
+        <div className="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-4">
+          {/* Title + stats */}
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{t.calendarTitle}</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {t.calendarSubtitle(vacationPlans.length, leaveDaysInput)}
+              {" · "}
+              <span className="text-red-500 font-medium">{yearStats.totalHolidays}</span>{" "}
+              {t.publicHolidays}
+              {" · "}
+              <span className="text-orange-500 font-medium">{yearStats.totalHalfDays}</span>{" "}
+              {t.halfDays}
+              {" · "}
+              <span className="text-blue-500 font-medium">{yearStats.totalWeekends}</span>{" "}
+              {t.weekendDays}
+            </p>
+          </div>
+
+          {/* Back button */}
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-blue-200
+                       text-sm font-semibold text-blue-600 bg-blue-50
+                       hover:bg-blue-100 hover:border-blue-300
+                       active:scale-95 transition-all duration-150"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            {t.changeLeaveDays}
+          </button>
+        </div>
       </div>
-      <div className="mb-6">
-        <label htmlFor="plan-select" className="mr-4 text-lg font-medium">
-          Tatil Planı Seçin:
-        </label>
-        <select
-          id="plan-select"
-          value={selectedPlanIndex}
-          onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
-          className="p-2 border rounded-lg"
-        >
-          {vacationPlans.map((_, index) => (
-            <option key={index} value={index}>
-              Plan {index + 1}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid grid-cols-6 gap-4">
-        {months.map((month, index) => (
-          <MonthBox
-            key={index}
-            monthName={month.name}
-            monthIndex={month.monthIndex}
-            days={month.days}
-            startDay={month.startDay}
-            highlightedDays={highlightedDays}
-          />
-        ))}
+
+      <div className="max-w-screen-2xl mx-auto flex flex-col xl:flex-row">
+        {/* ── Sidebar: plan cards ── */}
+        <aside className="xl:w-80 2xl:w-96 bg-white/70 border-b xl:border-b-0 xl:border-r border-blue-100 shrink-0">
+          <div className="px-4 py-3 border-b border-blue-100">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+              {vacationPlans.length} Plan
+            </h2>
+          </div>
+
+          {/* Cards: horizontal scroll on mobile, vertical on xl */}
+          <div className="p-3 flex xl:flex-col flex-row xl:gap-2 gap-2
+                          overflow-x-auto xl:overflow-x-visible
+                          xl:overflow-y-auto xl:max-h-[calc(100vh-140px)]">
+            {vacationPlans.length === 0 ? (
+              <p className="text-sm text-gray-400 p-4">No plans found.</p>
+            ) : (
+              vacationPlans.map((plan, i) => (
+                <div
+                  key={i}
+                  className="xl:w-full w-72 shrink-0 animate-fade-in-up"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
+                  <PlanCard
+                    plan={plan}
+                    index={i}
+                    isSelected={i === selectedPlanIndex}
+                    onClick={() => setSelectedPlanIndex(i)}
+                    leaveDaysInput={leaveDaysInput}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+
+        {/* ── Main: legend + detail + calendar ── */}
+        <main className="flex-1 p-5 min-w-0">
+          {/* Legend — at the top so users see it first */}
+          <div className="mb-5 bg-white rounded-xl border border-blue-100 shadow-sm p-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+              {t.legendTitle}
+            </p>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {legendItems.map(({ bg, label }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <div className={`w-5 h-5 rounded border flex-shrink-0 ${bg}`} />
+                  <span className="text-xs text-gray-600">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected plan detail */}
+          {selectedPlan && (
+            <div className="mb-5 bg-white rounded-xl border border-blue-100 shadow-sm p-4 animate-fade-in-up">
+              <div className="flex flex-wrap gap-5">
+                {selectedPlan.blocks.map((block, bi) => (
+                  <div key={bi} className="flex-1 min-w-[200px]">
+                    {selectedPlan.blocks.length > 1 && (
+                      <p className="text-xs text-gray-400 mb-1 font-semibold uppercase tracking-wide">
+                        {t.blockLabel(bi + 1)}
+                      </p>
+                    )}
+                    <p className="font-bold text-gray-900">
+                      {formatDateRange(block.startDate, block.endDate)}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      {block.totalVacationDays} {t.daysWord} ·{" "}
+                      {block.leaveDaysUsed.length} {t.leaveUsedLabel} ·{" "}
+                      {block.efficiency.toFixed(1)}x {t.effLabel}
+                    </p>
+                    {block.leaveDaysUsed.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {block.leaveDaysUsed.map((d) => (
+                          <span
+                            key={d}
+                            className="text-xs bg-emerald-100 text-emerald-700
+                                       px-2 py-0.5 rounded-full font-semibold"
+                          >
+                            {dayjs(d).format("ddd D MMM")}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {months.map((month) => (
+              <MonthBox
+                key={month.monthIndex}
+                year={year}
+                today={today}
+                monthName={month.name}
+                monthIndex={month.monthIndex}
+                days={month.days}
+                startDay={month.startDay}
+                leaveDays={leaveDaysList}
+                vacationBlockDays={vacationBlockDaysList}
+                holidayData={holidayData}
+                weekdayLabels={t.weekdayLabels}
+              />
+            ))}
+          </div>
+        </main>
       </div>
     </div>
   );

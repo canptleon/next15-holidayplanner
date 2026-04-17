@@ -61,10 +61,3 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Deploy
-
-The project is deployed on [Vercel](https://vercel.com). To deploy your own fork:
-
-```bash
-vercel
-```

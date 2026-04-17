@@ -19,6 +19,7 @@ export interface TranslationMap {
   daysOff: string;
   leaveArrow: string;
   daysWord: string;
+  daysSuffix: string;
   efficiencyLabel: string;
   unusedLeave: (n: number) => string;
   blockLabel: (n: number) => string;
@@ -32,7 +33,16 @@ export interface TranslationMap {
   legendHalfDay: string;
   legendWeekend: string;
   legendPast: string;
+  legendMandatoryLeave: string;
   leaveDayTooltip: string;
+  mandatoryTooltip: string;
+  mandatoryLeaveBtn: string;
+  mandatoryLeaveDesc: string;
+  mandatoryDaysSelected: string;
+  mandatoryUseFromBudget: string;
+  mandatoryNotFromBudget: string;
+  mandatoryCancel: string;
+  mandatoryApply: string;
   weekdayLabels: string[];
   langLabel: string;
 }
@@ -56,6 +66,7 @@ const tr: TranslationMap = {
   daysOff: "gün tatil",
   leaveArrow: "izin",
   daysWord: "gün",
+  daysSuffix: "g",
   efficiencyLabel: "verimlilik",
   unusedLeave: (n) => `+${n} izin günü kullanılmadı`,
   blockLabel: (n) => `Blok ${n}`,
@@ -69,7 +80,16 @@ const tr: TranslationMap = {
   legendHalfDay: "Yarım Gün Tatil",
   legendWeekend: "Hafta Sonu",
   legendPast: "Geçmiş",
+  legendMandatoryLeave: "Zorunlu İzin",
   leaveDayTooltip: "İzin Günü",
+  mandatoryTooltip: "Zorunlu İzin",
+  mandatoryLeaveBtn: "Zorunlu İzin Günü",
+  mandatoryLeaveDesc: "Yılın geri kalanından belirli günleri izin olarak işaretleyin",
+  mandatoryDaysSelected: "gün seçildi",
+  mandatoryUseFromBudget: "Bu günleri izin hakkımdan kullan",
+  mandatoryNotFromBudget: "İzin hakkımdan kullanma (ekstra)",
+  mandatoryCancel: "İptal",
+  mandatoryApply: "Uygula",
   weekdayLabels: ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pa"],
   langLabel: "EN",
 };
@@ -84,7 +104,7 @@ const en: TranslationMap = {
   homeValidationError: "Please enter a number between 1 and 30.",
   calendarTitle: "2026 Leave Planner",
   calendarSubtitle: (count, days) =>
-    `${count} plans found for ${days} leave day${days !== 1 ? "s" : ""}`,
+    `${count} plan${count !== 1 ? "s" : ""} found for ${days} leave day${days !== 1 ? "s" : ""}`,
   publicHolidays: "public holidays",
   halfDays: "half-days",
   weekendDays: "weekend days",
@@ -94,6 +114,7 @@ const en: TranslationMap = {
   daysOff: "days off",
   leaveArrow: "leave",
   daysWord: "days",
+  daysSuffix: "d",
   efficiencyLabel: "efficiency",
   unusedLeave: (n) => `+${n} leave day${n !== 1 ? "s" : ""} unused`,
   blockLabel: (n) => `Block ${n}`,
@@ -107,7 +128,16 @@ const en: TranslationMap = {
   legendHalfDay: "Half-day Holiday",
   legendWeekend: "Weekend",
   legendPast: "Past",
+  legendMandatoryLeave: "Mandatory Leave",
   leaveDayTooltip: "Leave Day",
+  mandatoryTooltip: "Mandatory Leave",
+  mandatoryLeaveBtn: "Mandatory Leave Days",
+  mandatoryLeaveDesc: "Mark specific days as mandatory leave for the rest of the year",
+  mandatoryDaysSelected: "day(s) selected",
+  mandatoryUseFromBudget: "Use these days from my leave budget",
+  mandatoryNotFromBudget: "Don't use from leave budget (extra)",
+  mandatoryCancel: "Cancel",
+  mandatoryApply: "Apply",
   weekdayLabels: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
   langLabel: "TR",
 };

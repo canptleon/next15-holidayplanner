@@ -5,6 +5,7 @@ interface DayProps {
   isWeekend: boolean;
   isLeaveDay: boolean;
   isVacationBlock: boolean;
+  isMandatoryLeave: boolean;
   isPast: boolean;
   tooltip?: string;
 }
@@ -16,18 +17,25 @@ export default function Days({
   isWeekend,
   isLeaveDay,
   isVacationBlock,
+  isMandatoryLeave,
   isPast,
   tooltip,
 }: DayProps) {
   // ── Colour priority ─────────────────────────────────────────────
-  // leave day > holiday > half-day > weekend > vacation-block > default
+  // mandatory > leave day > holiday > half-day > weekend > vacation-block > default
   let bgClass = "bg-white dark:bg-gray-700";
   let textClass = "text-gray-700 dark:text-gray-300";
   let borderClass = "border-gray-200 dark:border-gray-600";
   let fontClass = "";
   let ringClass = "";
 
-  if (isLeaveDay) {
+  if (isMandatoryLeave) {
+    bgClass = "bg-violet-200 dark:bg-violet-700";
+    textClass = "text-violet-900 dark:text-violet-100";
+    borderClass = "border-violet-400 dark:border-violet-500";
+    fontClass = "font-bold";
+    ringClass = "ring-2 ring-violet-400 dark:ring-violet-500 ring-offset-1 dark:ring-offset-gray-800";
+  } else if (isLeaveDay) {
     bgClass = "bg-emerald-200 dark:bg-emerald-700";
     textClass = "text-emerald-900 dark:text-emerald-100";
     borderClass = "border-emerald-400 dark:border-emerald-500";

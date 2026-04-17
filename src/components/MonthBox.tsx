@@ -21,6 +21,9 @@ interface MonthBoxProps {
   vacationBlockDays: string[];
   holidayData: Holiday[];
   weekdayLabels: string[];
+  mandatoryDays?: string[];
+  leaveDayTooltip?: string;
+  mandatoryLeaveTooltip?: string;
 }
 
 export default function MonthBox({
@@ -34,12 +37,16 @@ export default function MonthBox({
   vacationBlockDays,
   holidayData,
   weekdayLabels,
+  mandatoryDays = [],
+  leaveDayTooltip = "Leave Day",
+  mandatoryLeaveTooltip = "Mandatory Leave",
 }: MonthBoxProps) {
   const daysArray = Array.from({ length: days }, (_, i) => i + 1);
   const emptyCells = Array.from({ length: startDay });
 
   const leaveSet = new Set(leaveDays);
   const blockSet = new Set(vacationBlockDays);
+  const mandatorySet = new Set(mandatoryDays);
 
   const holidayMap = new Map<string, Holiday>(
     holidayData.map((h) => [h.date, h])
@@ -84,13 +91,16 @@ export default function MonthBox({
           const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
           const isLeaveDay = leaveSet.has(fullDate);
           const isVacationBlock = blockSet.has(fullDate);
+          const isMandatoryLeave = mandatorySet.has(fullDate);
           const isPast = fullDate < today;
 
           let tooltip: string | undefined;
-          if (holiday) {
+          if (isMandatoryLeave) {
+            tooltip = mandatoryLeaveTooltip;
+          } else if (holiday) {
             tooltip = holiday.name;
           } else if (isLeaveDay) {
-            tooltip = "İzin Günü";
+            tooltip = leaveDayTooltip;
           }
 
           return (
@@ -102,6 +112,7 @@ export default function MonthBox({
               isWeekend={isWeekend}
               isLeaveDay={isLeaveDay}
               isVacationBlock={isVacationBlock}
+              isMandatoryLeave={isMandatoryLeave}
               isPast={isPast}
               tooltip={tooltip}
             />

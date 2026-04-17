@@ -114,6 +114,7 @@ export function calculateOptimalVacationPlans(
   // ── 4. Generate diverse plans ──────────────────────────────────────────────
   const plans: VacationPlan[] = [];
   const seenPlanKeys = new Set<string>();
+  const seenLeaveKeys = new Set<string>(); // deduplicate plans that use identical leave-day sets
   const maxAnchors = Math.min(opportunities.length, 150);
 
   for (let ai = 0; ai < maxAnchors; ai++) {
@@ -148,6 +149,13 @@ export function calculateOptimalVacationPlans(
     const planKey = usedOpps.map((o) => `${o.startDate}~${o.endDate}`).join("|");
     if (seenPlanKeys.has(planKey)) continue;
     seenPlanKeys.add(planKey);
+
+    // Skip plans whose leave-day set is identical to an already-added plan.
+    // This prevents showing 10 "same green days" plans that only differ in
+    // which free-day boundary anchors the block (e.g. after adding mandatory days).
+    const leaveKey = [...usedLeaveSet].sort().join(",");
+    if (seenLeaveKeys.has(leaveKey)) continue;
+    seenLeaveKeys.add(leaveKey);
 
     const totalLeaveDaysUsed = usedOpps.reduce((s, o) => s + o.leaveCount, 0);
     const totalVacationDays = usedOpps.reduce((s, o) => s + o.totalDays, 0);

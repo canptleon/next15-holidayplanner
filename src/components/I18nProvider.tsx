@@ -10,13 +10,13 @@ interface I18nContextType {
 }
 
 const I18nContext = createContext<I18nContextType>({
-  lang: "tr",
+  lang: "en",
   setLang: () => {},
-  t: translations.tr,
+  t: translations.en,
 });
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("tr");
+  const [lang, setLang] = useState<Lang>("en");
 
   // Restore from localStorage after mount
   useEffect(() => {

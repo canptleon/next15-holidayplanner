@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Holiday Planner 2026
+
+> Maximize your time off by combining leave days with weekends and public holidays.
+
+**[→ Live Demo](https://holiday-planner-lilac.vercel.app/)**
+
+---
+
+## What It Does
+
+Holiday Planner analyzes Turkey's 2026 public holiday calendar and finds the most efficient ways to use your annual leave days. Enter how many leave days you have and get up to 10 optimized vacation plans — ranked by total days off and efficiency.
+
+### Features
+
+- **Smart optimization** — bridges leave days with weekends and public holidays to maximize consecutive days off
+- **Up to 10 diverse plans** — each plan uses a genuinely different set of leave days
+- **Mandatory leave days** — pin specific dates you must take off; the algorithm accounts for them either from your budget or as extra free days
+- **Interactive calendar** — full 12-month view with color-coded leave days, vacation blocks, public holidays, and mandatory days
+- **Dark mode** — full light/dark theme support
+- **English / Turkish** — switch languages from the header
+
+### Color Legend
+
+| Color | Meaning |
+|---|---|
+| 🟩 Emerald (dark) | Leave day used by the algorithm |
+| 🟪 Violet | Mandatory leave day |
+| 🟩 Emerald (light) | Vacation block (days off around leave days) |
+| 🟥 Red | Public holiday |
+| 🟧 Orange | Half-day holiday (arife) |
+| 🟦 Blue | Weekend |
+
+---
+
+## Tech Stack
+
+- [Next.js 15](https://nextjs.org) — App Router, server components
+- [React 19](https://react.dev)
+- [Tailwind CSS 4](https://tailwindcss.com)
+- [dayjs](https://day.js.org) — date manipulation
+
+---
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How the Algorithm Works
 
-## Learn More
+1. **Build free-day set** — collects all weekends, public holidays, and mandatory days
+2. **Exhaustive window scan** — for every pair of free days, calculates the leave days needed to bridge between them and the resulting efficiency (`total days / leave days used`)
+3. **Plan generation** — greedily combines the highest-efficiency opportunities without leave-day conflicts; deduplicates by both block ranges and leave-day sets to ensure each plan is genuinely distinct
+4. **Ranking** — sorts by total vacation days, then efficiency; returns the top 10 plans
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project is deployed on [Vercel](https://vercel.com). To deploy your own fork:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+vercel
+```
